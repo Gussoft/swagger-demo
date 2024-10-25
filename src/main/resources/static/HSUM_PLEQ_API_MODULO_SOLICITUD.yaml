@@ -1,0 +1,2239 @@
+# PLANTILLA DE DEFINICIÓN DE APIs.                                                                                                                                                            #
+# VERSIÓN: 2                                                                                                                                                                                  #
+# FECHA: 23/07/2021                                                                                                                                                                           #
+# AUTOR: Gobierno API MD                                                                                                                                                                      #
+# REVISIONES:                                                                                                                                                                                 #
+# - 23/07/2021. Creación de la plantilla a partir de la versión 1 (Paso de OpenAPI 2 a OpenAPI 3) (e_jdg125).                                                                                 #
+# - 22/12/2021. Inclusión de nuevos ejemplos relacionados con ficheros (e_jdg125):                                                                                                            #
+#     - El endpoint PUT /expedientes/{id_expediente}, de subida de un fichero.                                                                                                                #
+#     - El endpoint GET /expedientes/{id_expediente}, que devuelve un fichero.                                                                                                                #
+# - 28/01/2022: Modificación de los parámetros id_cliente e id_expediente. Ahora son uuid_cliente y uuid_expediente, y ejemplifican el uso de UUIDs como identificador de recurso (e_jdg125). #
+# - 11/04/2022: Modificación del parámetro stack_trace de standard_response_result. Es un array de objetos con diferentes propiedades, no un string (e_jdg125).                               #
+###############################################################################################################################################################################################
+#
+################################################################################
+#                                                                              #
+#                         --RECOMENDACIONES TÉCNICAS--                         #
+#                                                                              #
+#   * No usar líneas en blanco en la definición para facilitar la validación   #
+#     automatizada de la misma. Usar # al principio de la línea para dejarla   #
+#     comentada si se desea incluir líneas en blanco.                          #
+#                                                                              #
+#   * Guardar el archivo con la definición codificado en UTF-8 para evitar     #
+#     errores de codificación al subirlo a SVN. Consultar la documentación     #
+#     de la herramienta que estemos usando para editar el archivo. Se debe     #
+#     configurar adecuadamente el entorno para que la codificación por de-     #
+#     fecto sea UTF-8.                                                         #
+#                                                                              #
+################################################################################
+#
+################################################################################
+#                                                                              #
+#                    --NORMAS Y RECOMENDACIONES GENERALES--                    #
+#                                                                              #
+#    * Es OBLIGATORIO partir de esta plantilla para definir cualquier API      #
+#      que cumpla el estándar de definición de APIs de Madrid Digital.         #
+#                                                                              #
+#    * Los elementos que comienzan por 'standard', NO se pueden eliminar       #
+#      ni modificar.                                                           #
+#                                                                              #
+#    * Se deben incluir siempre descripciones de todo lo que sea posible:      #
+#      endpoints, recursos, subrecursos, propiedades, respuestas, etc.         #
+#      El elemento description permite enriquecer la documentación de la       #
+#      API. Se puede usar HTML o markdown para darles un formato adecuado.     #
+#                                                                              #
+#    * Reutilizar todos los elementos posibles.                                #
+#      Si un modelo se usa en varios recursos se debe definir en la sección    #
+#      correspondiente del apartado 'components' y reutilizarlo mediante       #
+#      $ref donde sea necesario. Los parámetros reutilizables se definen en    #
+#      la sección 'parameters', y las respuestas en la sección 'responses'.    #
+#      Los modelos propios u objetos a referenciar, en la sección 'schemas'.   #
+#                                                                              #
+#    * Definir ejemplos para todas las respuestas, parámetros y propiedades.   #
+#      Los ejemplos de respuestas reutilizables se especifican en la sección   #
+#      'examples'. Los de los parámetros y las propiedades de los modelos      #
+#      pueden especificarse en la propia definción de los mismos. Es muy       #
+#      importante que coincidan con lo definido.                               #
+#      Si no se definen bien, no se mostrarán en la previsualización, lo que   # 
+#      dificultará la comprensión y consumo de la API. Tampoco se podrán       #
+#      publicar mock servers a partir de la definición.                        #
+#                                                                              #
+#    * Eliminar de la definición todos aquellos elementos que no se usen,      #
+#      a excepción de aquellos que se indica que no deben ser eliminados.      #
+#                                                                              #
+#    * Organizar los recursos mediante etiquetas (tags) [OBLIGATORIO].         #
+#      La forma recomendada de organizar los recursos es agruparlos en         #
+#      etiquetas por recurso y acciones. Para las acciones se recomienda       #
+#      dividirlas en consultas y modificación, como en esta plantilla.         #
+#      Las peticiones con método GET se agrupan como consultas y las que       #
+#      tienen métodos POST, PUT y DELETE como modificaciones.                  #
+#      Si se tuvieran más recursos se agruparían del mismo modo.               #
+#      Por ejemplo, si tuviéramos otro recurso llamado cuentas, sería:         #
+#         - cuentas (consultas)                                                #
+#         - cuentas (modificación)                                             #
+#      También es OBLIGATORIO documentar las etiquetas tal y como se ha        #
+#      expuesto previamente en la sección 'tags' de esta plantilla.            #
+#                                                                              #
+#      * Especificar los códigos de error internos particulares de la API      #
+#      en cada recurso que apliquen. Existen códigos de error de uso general   #
+#      que ya están incorporados en el arquetipo Atlas 2. Estos no es          #
+#      necesario especificarlos. Dichos códigos son los siguientes:            #
+#         - 1000: atributo con valor nulo                                      #
+#         - 1001: atributo con tamaño superior al máximo permitido             #
+#         - 1002: atributo con valor inferior al mínimo                        #
+#         - 1003: atributo con valor superior al máximo                        #
+#         - 1004: el atributo no cumple la expresión regular de validación     #
+#         - 1005: el atributo no tiene el formato de fecha sin hora requerido  #
+#         - 1006: el atributo no tiene el formato de fecha con hora requerido  #
+#         - 1007: atributo con un valor distinto a los permitidos              #
+#         - 1008: el atributo no llega a la longitud mínima                    #
+#         - 1009: el atributo supera la longitud máxima                        #
+#         - 1100: filtrado por propiedad inexistente                           #
+#         - 1101: error al validar la entidad                                  #
+#         - 1102: error de conexión con BBDD                                   #
+#         - 1103: propiedad no encontrada en búsqueda en BBDD                  #
+#         - 1104: elemento no encontrado                                       #
+#         - 1105: error al transformar la fecha                                #
+#         - 1106: mensaje de error con más parámetros de los necesarios        #
+#         - 1200: recurso no encontrado                                        #
+#         - 1201: parámetro vacío o incorrecto en el cuerpo de la petición     #
+#         - 1202: cuerpo de la petición vacío o con formato incorrecto         #
+#         - 1203: error en conversión de tipos                                 #
+#         - 1204: URL no normalizada                                           #
+#                                                                              #
+################################################################################
+openapi: "3.0.0"
+info:
+  version: v1
+  # El título de la API debe indicarse como en este ejemplo.
+  # IMPORTANTE: No se pueden incluir espacios en blanco ni caracteres especiales.
+  # Si consta de varias palabras, deben separarse por mayúsculas.
+  title: Plan de Equipamiento
+  description: | 
+    ----
+    ### Descripción de la API
+    Api para la gestión de Agencia Madrileña de Atención Social (AMAS)
+    que tiene como objetivo ofrecer servicios sociales especializados a los colectivos de especial vulnerabilidad.
+    ### Códigos de error de todo la API (se especifican en cada recurso):
+    |Código|Error|
+    | -- | -- |
+    |2001|Tipo de cliente no valido|
+    |2002|Fecha de nacimiento incorrecta|
+    |2003|Error de negocio xxxx|
+    |2004|Error de negocio yyyy|
+    ----
+  contact:
+    name: Nombre del API owner o del área responsable
+    url: http://urldesoporte.com
+    email: email.de.area.responsable@madrid.org
+servers:
+  # En este bloque debemos especificar la url del host en el que se desplegará la API (Por ejemplo: apis.comunidad.madrid)
+  # * seguida del basepath de la propia API (Por ejemplo: /ciencia-tecnologia/plantilla-api)
+  # Nunca se incluirá la versión en la url, ya que el API Manager se encarga de concatenarla
+  #
+  # Hosts en función del tipo de acceso y del entorno:
+  # Desarrollo: apis.des.comunidad.madrid
+  # Validación: apis.val.comunidad.madrid
+  # Producción:
+  #   Internet: apis.comunidad.madrid
+  #   Intranet: apisintra.comunidad.madrid
+  #
+  - url: https://apis.comunidad.madrid/ciencia-tecnologia/plantilla-api
+    description: Url de la API
+# Es OBLIGATORIO documentar las etiquetas que agrupan los endpoints en esta sección.
+# IMPORTANTE: Tener en cuenta las recomendaciones sobre la organización de los recursos mediante etiquetas descritas al inicio del documento.
+tags:
+  # La primera etiqueta es un ejemplo. Se debe borrar cuando se definan las etiquetas propias de la API.
+  # Consta de tres elementos: name (nombre de la etiqueta), description (descripción) y, opcionalmente, enlaces externos
+  # que documenten la etiqueta
+
+  # Las siguientes etiquetas se usan en el recurso de ejemplo (clientes). Se deben ajustar a las etiquetas propias de la API
+  # o eliminarlas si se prefiere definir las etiquetas propias desde cero.
+
+  #tags por defecto eliminar al finalizar
+    # Esta etiqueta es estándar, no debe eliminarse
+  - name: monitorización
+    description: Etiqueta a aplicar al endpoint /status
+  ############# agregar los tags del api nuevo aqui: #######################
+  - name: solicitudes (consultas)
+    description: agrupa las consultas sobre el recurso solicitudes, ya sean individuales o sobre la coleccion completa.
+  - name: solicitudes (modificación)
+    description: Agrupa las operaciones de creación, modificación y borrado de expedientes individuales.
+  - name: productos (consultas)
+    description: agrupa las consultas sobre el recurso productos, ya sean individuales o sobre la coleccion completa.
+  - name: productos (modificación)
+    description: Agrupa las operaciones de creación, modificación y borrado de expedientes individuales.
+paths:
+  ##################################################################
+  #                                                                #
+  #                          --IMPORTANTE--                        #
+  #                                                                #    
+  #     Todos los comentarios incluidos en el primer endpoint      #
+  #     (GET /clientes) sirven como referencia y deben tenerse     #
+  #     en cuenta a la hora de definir el resto de endpoints.      #
+  #                                                                #
+  ##################################################################
+  #
+  /solicitudes:
+    post:
+      summary: Creación de una Solicitud dentro de la colección.
+      description: Permite crear tres tipos de solicitudes Plan anual de Equipamiento, Productos de Urgencia, Productos extra.
+      tags:
+        - solicitudes (modificación)
+      parameters:      
+        - $ref: '#/components/parameters/standard_trace_id_header_param'
+        - $ref: '#/components/parameters/header_param'
+      requestBody:
+        $ref: '#/components/requestBodies/post_solicitud_body_param'
+      responses:
+        201:
+          $ref: '#/components/responses/solicitud_response' #post
+        400:
+          $ref: '#/components/responses/standard_bad_request_response'
+        401:
+          $ref: '#/components/responses/standard_unauthorized_response'
+        403:
+          $ref: '#/components/responses/standard_forbidden_response'
+        429:
+          $ref: '#/components/responses/standard_too_many_requests_response'
+        default:
+          $ref: '#/components/responses/standard_server_error_response'
+    get:
+      summary: Obtención de una colección de Solicudes
+      description: | 
+        Permite obtener una colección de solicitudes.
+        Admite cabeceras y *query parameters*.
+      tags:
+        - solicitudes (consultas)
+      parameters:
+        - $ref: '#/components/parameters/standard_init_param'
+        - $ref: '#/components/parameters/standard_limit_param'
+        - $ref: '#/components/parameters/standard_total_param'
+        - $ref: '#/components/parameters/standard_select_param'
+        - $ref: '#/components/parameters/standard_exclude_param'
+        - $ref: '#/components/parameters/standard_expand_param'
+        - $ref: '#/components/parameters/standard_order_by_param'
+        - $ref: '#/components/parameters/standard_trace_id_header_param'
+        - $ref: '#/components/parameters/query_param'
+        - $ref: '#/components/parameters/header_param'
+      responses:
+        206:
+          $ref: '#/components/responses/solicitudes_response'
+        400:
+          $ref: '#/components/responses/standard_bad_request_response'
+        401:
+          $ref: '#/components/responses/standard_unauthorized_response'
+        403:
+          $ref: '#/components/responses/standard_forbidden_response'
+        429:
+          $ref: '#/components/responses/standard_too_many_requests_response'
+        default:
+          $ref: '#/components/responses/standard_server_error_response'
+  #
+  /solicitudes/{uuid_solicitud}:
+    get:
+      summary: Obtención de una colección de solicitudes.
+      description: |
+        Permite obtener una coleccion de Solicitudes.
+        Admite cabeceras y *query parameters*.
+      tags:
+        - solicitudes (consultas)
+      parameters:
+        - $ref: '#/components/parameters/standard_init_param'
+        - $ref: '#/components/parameters/standard_limit_param'
+        - $ref: '#/components/parameters/standard_total_param'
+        - $ref: '#/components/parameters/standard_select_param'
+        - $ref: '#/components/parameters/standard_exclude_param'
+        - $ref: '#/components/parameters/standard_expand_param'
+        - $ref: '#/components/parameters/standard_order_by_param'
+        - $ref: '#/components/parameters/standard_trace_id_header_param'
+        - $ref: '#/components/parameters/query_param'
+        - $ref: '#/components/parameters/header_param'
+      responses:
+        206:
+          $ref: '#/components/responses/solicitud_response'
+        400:
+          $ref: '#/components/responses/standard_bad_request_response'
+        401:
+          $ref: '#/components/responses/standard_unauthorized_response'
+        403:
+          $ref: '#/components/responses/standard_forbidden_response'
+        429:
+          $ref: '#/components/responses/standard_too_many_requests_response'
+        default:
+          $ref: '#/components/responses/standard_server_error_response'
+    put:
+      summary: Modificacion de una solicitud.
+      description: |
+        Permite modificar un cliente mediante su UUID único. 
+        Dicho UUID es un parámetro obligatorio en la URL. 
+        Los datos del cliente a modificar se incluirán en el *body* de la petición
+        ### Códigos de error del método:
+        | Código | Error |
+        | -- | -- |
+        |2001|Tipo de cliente no valido|
+        |2002|Fecha de nacimiento incorrecta|
+        |2003|Error de negocio xxxx|
+      tags:
+        - solicitudes (modificación)
+      parameters:
+        - $ref: '#/components/parameters/uuid_solicitud_param'
+        - $ref: '#/components/parameters/standard_trace_id_header_param'
+        - $ref: '#/components/parameters/header_param'
+      requestBody:
+        $ref: '#/components/requestBodies/put_solicitud_body_param'
+      responses:
+        200:
+          $ref: '#/components/responses/solicitud_response'
+        400:
+          $ref: '#/components/responses/standard_bad_request_response'
+        401:
+          $ref: '#/components/responses/standard_unauthorized_response'
+        403:
+          $ref: '#/components/responses/standard_forbidden_response'
+        404:
+          $ref: '#/components/responses/standard_not_found_response'
+        429:
+          $ref: '#/components/responses/standard_too_many_requests_response'
+        default:
+          $ref: '#/components/responses/standard_server_error_response'
+  #
+  /solicitudes/{uuid_solicitud}/validar:
+    put:
+      summary: Actualizar la informacion de solicitudes validando el estado.
+      description: |
+        Permite obtener un cliente mediante su UUID único.
+        Dicho UUID es un parámetro obligatorio en la URL.
+      parameters:      
+        - $ref: '#/components/parameters/standard_trace_id_header_param'
+        - $ref: '#/components/parameters/header_param'
+      tags:
+        - solicitudes (modificación)
+      responses:
+        200:
+          $ref: '#/components/responses/solicitud_response'
+        400:
+          $ref: '#/components/responses/standard_bad_request_response'
+        401:
+          $ref: '#/components/responses/standard_unauthorized_response'
+        403:
+          $ref: '#/components/responses/standard_forbidden_response'
+        404:
+          $ref: '#/components/responses/standard_not_found_response'
+        429:
+          $ref: '#/components/responses/standard_too_many_requests_response'
+        default:
+          $ref: '#/components/responses/standard_server_error_response'
+  #
+  /solicitudes/productos:
+    post:
+      summary: Creación de un Producto dentro de la colección.
+      description: Permite Agregar un Producto
+      tags:
+        - productos (modificación)
+      parameters:      
+        - $ref: '#/components/parameters/standard_trace_id_header_param'
+        - $ref: '#/components/parameters/header_param'
+      requestBody:
+        $ref: '#/components/requestBodies/post_producto_body_param'
+      responses:
+        201:
+          $ref: '#/components/responses/productos_response'
+        400:
+          $ref: '#/components/responses/standard_bad_request_response'
+        401:
+          $ref: '#/components/responses/standard_unauthorized_response'
+        403:
+          $ref: '#/components/responses/standard_forbidden_response'
+        429:
+          $ref: '#/components/responses/standard_too_many_requests_response'
+        default:
+          $ref: '#/components/responses/standard_server_error_response'
+    get:
+      summary: Obtención de una colección de Productos.
+      description: |
+        Permite obtener una coleccion de Productos.
+        Admite cabeceras y *query parameters*.
+      tags:
+        - productos (consultas)
+      parameters:
+        - $ref: '#/components/parameters/standard_init_param'
+        - $ref: '#/components/parameters/standard_limit_param'
+        - $ref: '#/components/parameters/standard_total_param'
+        - $ref: '#/components/parameters/standard_select_param'
+        - $ref: '#/components/parameters/standard_exclude_param'
+        - $ref: '#/components/parameters/standard_expand_param'
+        - $ref: '#/components/parameters/standard_order_by_param'
+        - $ref: '#/components/parameters/standard_trace_id_header_param'
+        - $ref: '#/components/parameters/query_param'
+        - $ref: '#/components/parameters/header_param'
+      responses:
+        206:
+          $ref: '#/components/responses/productos_response'
+        400:
+          $ref: '#/components/responses/standard_bad_request_response'
+        401:
+          $ref: '#/components/responses/standard_unauthorized_response'
+        403:
+          $ref: '#/components/responses/standard_forbidden_response'
+        429:
+          $ref: '#/components/responses/standard_too_many_requests_response'
+        default:
+          $ref: '#/components/responses/standard_server_error_response'
+  #
+  /solicitudes/productos/{uuid_producto}:
+    get:
+      summary: Obtención de un Producto por su UUID
+      description: | 
+        Permite obtener un Producto mediante su UUID único.
+        Dicho UUID es un parámetro obligatorio en la URL.
+      tags:
+        - productos (consultas)
+      parameters:
+        - $ref: '#/components/parameters/standard_select_param'
+        - $ref: '#/components/parameters/standard_exclude_param'
+        - $ref: '#/components/parameters/standard_expand_param'
+        - $ref: '#/components/parameters/standard_trace_id_header_param'
+        - $ref: '#/components/parameters/uuid_producto_param'
+        - $ref: '#/components/parameters/query_param'
+        - $ref: '#/components/parameters/header_param'
+      responses:
+        200:
+          $ref: '#/components/responses/producto_response'
+        400:
+          $ref: '#/components/responses/standard_bad_request_response'
+        401:
+          $ref: '#/components/responses/standard_unauthorized_response'
+        403:
+          $ref: '#/components/responses/standard_forbidden_response'
+        404:
+          $ref: '#/components/responses/standard_not_found_response'
+        429:
+          $ref: '#/components/responses/standard_too_many_requests_response'
+        default:
+          $ref: '#/components/responses/standard_server_error_response'
+    put:
+      summary: Modificación de un Producto
+      description: |
+        Permite modificar un producto mediante su UUID único. 
+        Dicho UUID es un producto obligatorio en la URL. 
+        Los datos del producto a modificar se incluirán en el *body* de la petición
+        ### Códigos de error del método:
+        | Código | Error |
+        | -- | -- |
+        |2001|Tipo de producto no valido|
+      tags:
+      - productos (modificación)
+      parameters:
+        - $ref: '#/components/parameters/uuid_producto_param'
+        - $ref: '#/components/parameters/standard_trace_id_header_param'
+        - $ref: '#/components/parameters/header_param'
+      requestBody:
+        $ref: '#/components/requestBodies/put_producto_body_param'
+      responses:
+        200:
+          $ref: '#/components/responses/producto_response'
+        400:
+          $ref: '#/components/responses/standard_bad_request_response'
+        401:
+          $ref: '#/components/responses/standard_unauthorized_response'
+        403:
+          $ref: '#/components/responses/standard_forbidden_response'
+        404:
+          $ref: '#/components/responses/standard_not_found_response'
+        429:
+          $ref: '#/components/responses/standard_too_many_requests_response'
+        default:
+          $ref: '#/components/responses/standard_server_error_response'
+    delete:
+      summary: Eliminación de un Producto
+      description: |
+        Permite eliminar un producto mediante su UUID único.
+        Dicho UUID es un parámetro obligatorio en la URL.
+        Adicionalmente puede admitir cabeceras.
+      tags:
+      - productos (modificación)
+      parameters:
+      - $ref: '#/components/parameters/uuid_producto_param'
+      - $ref: '#/components/parameters/standard_trace_id_header_param'
+      - $ref: '#/components/parameters/header_param'
+      responses:
+        200:
+          $ref: '#/components/responses/standard_delete_response'
+        400:
+          $ref: '#/components/responses/standard_bad_request_response'
+        401:
+          $ref: '#/components/responses/standard_unauthorized_response'
+        403:
+          $ref: '#/components/responses/standard_forbidden_response'
+        404:
+          $ref: '#/components/responses/standard_not_found_response'
+        429:
+          $ref: '#/components/responses/standard_too_many_requests_response'
+        default:
+          $ref: '#/components/responses/standard_server_error_response'
+  #
+  /status:
+    # Recurso de implementación obligatoria para monitorización de la API
+    # El recurso definido aquí es una propuesta de cómo debería implementarse.
+    # No obstante dicha implementación dependerá de los sistemas usados por la API.
+    # En cualquier caso debe ajustarse la definición a la implementación final,
+    # siendo conveniente definir la misma antes de llevarla a cabo.
+    get:
+      summary: Endpoint de monitorización de la API
+      description: | 
+        Propuesta de definición de la respuesta que debería ofrecer el endpoint de monitorización previsto en el estándar.
+        Se subdivide en comprobación de infraestructura y comprobación funcional. En la de infraestructura se especifican Los
+        sistemas probados y el estado de los mismos. En la funcional se deben hacer algunas llamadas a métodos GET de la API y 
+        especificar el código de estado HTTP que devuelven. Idealmente deben responder con códigos 2xx o 4xx. Los códigos 5xx
+        deben setear el campo status del objeto result a _false_
+      tags:
+      - monitorización
+      responses:
+        200:
+          $ref: '#/components/responses/standard_status_endpoint_response'
+        400:
+          $ref: '#/components/responses/standard_bad_request_response'
+        401:
+          $ref: '#/components/responses/standard_unauthorized_response'
+        403:
+          $ref: '#/components/responses/standard_forbidden_response'
+        429:
+          $ref: '#/components/responses/standard_too_many_requests_response'
+        default:
+          $ref: '#/components/responses/standard_server_error_response'
+  #
+components:
+  parameters:
+    #
+    ######################################################################
+    #       --- Parámetros estándar (NO ELIMINAR NI MODIFICAR) ---       #
+    ######################################################################
+    #
+    # Parámetro indicador del registro inicial para listados paginados.
+    standard_init_param:
+      in: query
+      name: $init
+      description: |
+        Registro inicial deseado
+        * Valor mínimo: 0
+        * Valor máximo: Número total de registros
+      schema:
+        type: integer
+        format: int32
+        default: 0
+        minimum: 0
+      required: false
+      example: 0
+    #  
+    # Parámetro indicador del máximo de registros a devolver en un listado paginado.
+    standard_limit_param:
+      in: query
+      name: $limit
+      description: | 
+        Número máximo de registros a mostrar por página
+        * Valor mínimo: 1
+      schema: 
+        type: integer
+        format: int32
+        minimum: 1
+        default: 25
+      required: false
+      example: 25
+    #
+    # Parámetro indicador del cálculo de totales.
+    standard_total_param:
+      in: query
+      name: $total
+      description: | 
+        Indica si se deben calcular y devolver los atributos _total_ y _total_pages_ en el objeto _metadata.paging_ de la respuesta estándar.
+      schema: 
+        type: boolean
+        default: false
+      required: false
+      example: true
+    #  
+    # Parámetro indicador de atributos a mostrar en la respuesta.
+    standard_select_param:
+      in: query
+      name: $select
+      description: | 
+        Permite seleccionar los atributos del recurso que se desean obtener en la consulta.
+        Se recomienda su uso cuando sólo se desea obtener unos pocos atributos de un recurso complejo.
+        Puede especificarse como un array de atributos. Ver estándar de definición de APIs.
+      schema:
+        type: array
+        minItems: 1
+        maxItems: 100
+        items:
+          type: string
+      required: false
+      example: [id,nombre,tipo]
+    #
+    # Parámetro indicador de atributos a excluir de la respuesta.
+    standard_exclude_param:
+      in: query
+      name: $exclude
+      description: |
+        Permite excluir determinados atributos del recurso. 
+        Se recomienda su uso cuando se desea excluir algunos atributos de un recurso complejo.
+        Puede especificarse como un array de atributos. Ver estándar de definición de APIs.
+      schema:
+        type: array
+        items:
+          type: string
+        minItems: 1
+        maxItems: 100
+      required: false
+      example: [id,tipo]
+    #  
+    # Parámetro indicador de subatributos a expandir.
+    standard_expand_param:
+      in: query
+      name: $expand
+      description: |  
+        Indica una lista de subatributos que se desea expandir.
+        Puede especificarse como un array de atributos. Ver estándar de definición de APIs.
+      schema:
+        type: array
+        minItems: 1
+        maxItems: 100
+        items:
+          type: string
+      required: false
+      example: [subcategoria,nombre_tipo]
+    #
+    # Parámetro de criterio de ordenación para listados paginados.
+    standard_order_by_param:
+      in: query
+      name: $orderby
+      description: |
+        Permite indicar los criterios de ordenación de una consulta. 
+        El formato a utilizar será un signo + ó - para indicar si es 
+        ascendente o descendente seguido del nombre de la columna o campo por el que se ordena.
+      schema:
+        type: array
+        minItems: 1
+        maxItems: 100
+        items:
+          type: string
+      required: false
+      example: [-date]
+    #
+    # Cabecera obligatoria de rastreo de petición.
+    standard_trace_id_header_param:
+      in: header
+      name: x-trace-id
+      description: |
+        Cabecera indicando el id de traceo de la petición.
+        Debe ser una cadena aleatoria basada en timestamp.
+      schema:
+        type: string
+        maxLength: 100
+      required: true
+      examples:
+        Ejemplo 1:
+          value: 12345abcde
+    #
+    ####################################################################
+    #              --- Parámetros propios de la API -----              #
+    ####################################################################
+    #                                                                  #
+    #    Aquí comienzan los parámetros particulares de la API.         #
+    #    Las definiciones de los recursos van en la sección schemas.   #
+    #    Las respuestas a devolver van en la sección responses.        #
+    #                                                                  #
+    ####################################################################
+    #
+    # Esto es un ejemplo de paso de parámetro por la query.
+    # IMPORTANTE: eliminar cuando se hayan definido los parámetros particulares de la API
+    query_param:
+      in: query
+      name: query_param
+      description: |
+        Ejemplo de query parameters particulares de cada endpoint.
+        Pueden ser de cualquier tipo: fecha, número, string, etc.
+      schema:
+        type: string
+      required: false
+      example: abc123
+    #
+    # Esto es un ejemplo de parámetro de cabecera HTTP. 
+    # IMPORTANTE: eliminar cuando se hayan definido los parámetros particulares de la API
+    header_param:
+      in: header
+      name: header_param
+      description: |
+        Ejemplo de cabeceras particulares de cada endpoint.
+      schema:
+        type: string
+      required: false
+      example: Valor cabecera
+    #
+  ########## QUERY PROPIOS DEL API ################
+    uuid_solicitud_param:
+      in: path
+      name: uuid_solicitud
+      description: UUID de la solicitud a obtener
+      schema:
+        $ref: '#/components/schemas/uuid'
+      required: true
+      examples:
+        Ejemplo 1:
+          value: '62977d46-7a50-41c9-8d84-38272ac2a8df'
+  #
+    uuid_producto_param:
+      in: path
+      name: uuid_solicitud
+      description: UUID de la solicitud a obtener
+      schema:
+        $ref: '#/components/schemas/uuid'
+      required: true
+      examples:
+        Ejemplo 1:
+          value: '62977d46-7a50-41c9-8d84-38272ac2a8df'
+  #
+  schemas:
+    #
+    #########################################################################
+    #          --- Schemas estándar (NO ELIMINAR NI MODIFICAR) ---          #
+    #########################################################################
+    #          
+    standard_response:
+      description: |
+        Respuesta estándar cuando un recurso devuelve un solo elemento
+        Debe usarse en los recursos que consultan o modifican un recurso por su identificador.
+        También debe usarse en las respuestas de error aunque no devuelvan datos del recurso.
+        En esta plantilla dichas respuestas son reutilizables y ya referencian este modelo.
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/standard_response_result'
+      required:
+        - result      
+    #
+    standard_response_with_metadata:
+      description: |
+        Respuesta estándar cuando un recurso devuelve una lista de elementos
+        Debe usarse en los recursos que devuelven listados paginados cumplimentando el objeto metadata.
+        En los errores se aplica la misma política que en los endpoints que devuelven un solo recurso.
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/standard_response_result'
+        - $ref: '#/components/schemas/standard_response_metadata'
+      required:
+        - result
+    #
+    standard_response_result:
+      description: |
+        Objeto result que tienen que devolver todos los recursos, correctos o incorrectos.
+        Los campos que SIEMPRE se devolverán en este objeto son status, http_code y trace_id.
+        El uso del resto de campos está descrito brevemente en sus propias descripciones, pero debe
+        consultarse el estándar de definición de APIs de MD para más información.
+      type: object
+      properties:
+        result:
+          type: object
+          properties:
+            status:
+              type: boolean
+              description: Resultado de éxito o error de la operación
+              example: true
+            http_code:
+              type: integer
+              format: int32
+              description: Código http de la respuesta.
+              example: 200
+            info:
+              type: string
+              description: Breve mensaje indicando si la operación fue exitosa o no.
+              example: Solicitud realizada con éxito.
+            errors:
+              type: array
+              description: Array de errores. Opcional. Se usará cuando se haya producido al menos un error, pudiéndose especificar tódos los que se hayan producido.
+              items:
+                $ref: '#/components/schemas/standard_error'
+            stack_trace:
+              type: array
+              description: Array que recoge los errores en caso de que sea necesario facilitar la depuración. Solo se incluirá en el entorno de desarrollo.
+              items:
+                type: object
+                properties: 
+                  methodName:
+                    type: string
+                    description: Método
+                    example: 'readJavaType'
+                  fileName:
+                    type: string
+                    description: Nombre del archivo
+                    example: 'archivo.java'
+                  lineNumber:
+                    type: integer
+                    format: int32
+                    description: Número de línea
+                    example: 36
+                  className:
+                    type: string
+                    description: Clase
+                    example: 'org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter'
+                  nativeMethod:
+                    type: boolean
+                    description: Método nativo
+                    example: false
+            trace_id:
+              type: string
+              description: Identificador de la petición en el sistema de logging para facilitar la depuración de errores. Contenido de la cabecera x-trace-id.
+              example: b8240028-8df4-4019-8b03-182a0a9bc88d
+            updated_elements:
+              type: integer
+              format: int32
+              description: Número de elementos borrados o modificados cuando se reciben llamadas con métodos PUT o DELETE sobre varios recursos. Obligatorio para borrados lógicos.
+              example: 0
+          required:
+          - status
+          - http_code
+          - trace_id
+    #
+    standard_response_metadata:
+      description: |
+        Este objeto se usa en respuestas paginadas. Está incluido en el modelo de respuesta estándar con metadatos
+        standard_response_with_metadata, por lo que no es necesario referenciarlo directamente.
+      properties:
+        metadata:
+          type: object
+          properties:
+            paging:
+              $ref: '#/components/schemas/standard_paging'
+    #
+    standard_error:
+      description: |
+        Modelo de error estándar a usar cuando se rellena el array de errores.
+        Ya está referenciado en la respuesta estándar.
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Codigo de error devuelto por la API. Se especificarán códigos de errores controlados. En el caso de errores no controlados se especificará si es posible. De lo contrario se deberá indicar un código 500.
+          example: 1003
+        message:
+          type: string
+          description: Descripción textual del error devuelto
+          example: Atributo con valor superior al máximo
+      required:
+      - code
+      - message
+    #
+    standard_paging:
+      description: |
+        Modelo de objeto paginación usado en la respuesta estándar con metadatos.
+        Incluye la información sobre paginación y se devuelve en todas las respuestas paginadas.
+      type: object
+      properties:
+        init:
+          type: integer
+          format: int32
+          description: Registro inicial de la página.
+          example: 3
+        limit:
+          type: integer
+          format: int32
+          description: Tamaño de página.
+          example: 5
+        total:
+          type: integer
+          format: int32
+          description: Número total de registros.
+          example: 35
+        num_page:
+          type: integer
+          format: int32
+          description: Número de la página actual.
+          example: 2
+        total_pages:
+          type: integer
+          format: int32
+          description: Número total de páginas.
+          example: 7
+        links:
+          type: object
+          properties:
+            self:
+              description: Enlace a la propia página devuelta.
+              allOf:
+              - $ref: '#/components/schemas/standard_paging_link'
+            previous:
+              description: Enlace a la página previa
+              allOf:
+              - $ref: '#/components/schemas/standard_paging_link'
+            next:
+              description: Enlace a la página siguiente.
+              allOf:
+              - $ref: '#/components/schemas/standard_paging_link'
+            first:
+              description: Enlace a la primera página.
+              allOf:
+              - $ref: '#/components/schemas/standard_paging_link'
+            last:
+              description: Enlace a la última página.
+              allOf:
+              - $ref: '#/components/schemas/standard_paging_link'
+          required:
+            - previous
+            - next
+      required:
+      - init
+      - limit
+      - links
+    #
+    standard_paging_link:
+      description: Modelo de enlace referenciado en el modelo de paginación.
+      type: object
+      properties:
+        href:
+          type: string
+          description: Enlace codificado en html.
+          example: https://apis.comunidad.madrid/ciencia-tecnologia/test-api/v1/resources?$init=15&amp;$limit=5
+    #
+    standard_status_endpoint_system_object:
+      description: Modelo de objeto de sistema para el endpoint de monitorización.
+      type: object
+      properties:
+        system:
+          type: string
+          description: Nombre del sistema probado
+          example: Database
+        status:
+          type: boolean
+          description: Estado del sistema probado
+          example: true
+    #
+    standard_status_endpoint_request_object:
+      description: Modelo de objeto de petición para el endpoint de monitorización.
+      type: object
+      properties:
+        request:
+          type: string
+          description: Recurso de la API al que se ha hecho la llamada
+          example: /users
+        response:
+          type: integer
+          format: int32
+          description: Código http de la respuesta obtenida
+          example: 200
+    #
+    standard_filter_value:
+      description: |
+        Modelo de valor de objeto de filtrado.
+        Consiste en un par clave-valor que indica un criterio para realizar el filtrado.
+      type: object
+      properties:
+        property: 
+          type: string
+          description: Nombre de la propiedad (columna de BBDD)
+          example: property_1
+        prop_type:
+          type: string
+          description: Tipo de dato
+          enum: [STRING, INTEGER, FLOAT, DATE, DATETIME, BOOLEAN]
+          example: STRING
+        prop_value:
+          type: string
+          description: Valor de la propiedad.
+          example: value_1
+        prop_values:
+          type: array
+          items:
+            type: string
+          description: Array de valores a usar como rango
+        $filter:
+          $ref: '#/components/schemas/standard_filter_object_base'
+    #
+    standard_filter_object:
+      type: object
+      description: |
+        Modelo de objeto de filtrado.
+        Parámetro que indica los criterios para una consulta compleja.
+        Permite realizar operaciones AND, OR, mayor o igual, substring, like, etc
+      properties:
+        operation:
+          type: string
+          description: Operación a realizar
+          example: LT
+          enum:
+            - AND
+            - OR
+            - GT
+            - LT
+            - GTEQ
+            - LTEQ
+            - EQ
+            - NEQ
+            - IN
+            - BETWEEN
+            - SUBSTRING
+            - LIKE
+            - ILIKE
+            - NLIKE
+            - REGEXP
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/standard_filter_value'
+    #
+    standard_filter_object_base:
+      description: |
+        Este objeto permite anidar (concatenar) filtros para realizar consultas más complejas.
+        Su implementación es la misma que se refleja en la definición de standard_filter_object.
+      type: object
+      properties:
+        operation:
+          type: string
+          description: Operación a realizar
+          example: LT
+          enum:
+            - AND
+            - OR
+            - GT
+            - LT
+            - GTEQ
+            - LTEQ
+            - EQ
+            - NEQ
+            - IN
+            - BETWEEN
+            - SUBSTRING
+            - LIKE
+            - ILIKE
+            - NLIKE
+            - REGEXP
+        values:
+          type: array
+          items:
+            type: string
+            description: | 
+              Este objeto es el mismo que se refleja en la definición de standard_filter_value. 
+              Permite concatenar valores para el filtro. Su tipo es el mismo que dicho objeto, 
+              aunque aquí esté definido como string para evitar referencias circulares.
+    #
+    # Modelo UUID para identificadores de recursos con información sensible
+    uuid:
+      description: Modelo para identificadores basados en UUID
+      type: string
+      format: uuid
+      minLength: 36
+      maxLength: 36
+      pattern: '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+      example: '62977d46-7a50-41c9-8d84-38272ac2a8df'
+    #
+    # Modelo de cabecera location para operaciones POST de creación de recursos
+    location_header:
+      description: Cabecera estándar a devolver en la creación de recursos
+      type: string
+      example: '/clientes/62977d46-7a50-41c9-8d84-38272ac2a8df'
+    #
+    ######################################################################
+    #                 --- Schemas propios de la API -----                #
+    ######################################################################
+    #                                                                    #
+    #    Aquí empiezan los schemas particulares de la API.               #
+    #                                                                    #
+    #    Para cada recurso estará bien definir el objeto u objetos que   #
+    #    representan el recurso o las distinas formas de verlo.          #
+    #    (Ej. cliente)                                                   #
+    #                                                                    #
+    #    Los parámetros de recursos van en la sección 'parameters'.      #
+    #    Las respuestas van en la sección 'responses'.                   #
+    #                                                                    #
+    ######################################################################
+    #
+    productos:
+      description: Modelo de recurso de Productos.
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+          example: 1
+        uuid:
+          type: integer
+          format: uuid
+          description: UUID único del producto.      
+          example: 'd2387b5d-ab2f-4d33-924e-c6772a1e74af'
+        id_solicitud:
+          type: integer
+          format: int32
+          description: id de la soliccitud asociado
+          example: 1
+        denominacion:
+          type: string
+          maxLength: 250
+          description: nombre del Product.
+          example: 'Smart Tv 32'
+        codigo_tipo_product:
+          type: string
+          maxLength: 250
+          description: identifica el tipo al que pertenece el producto.
+          example: 'Smart Tv'
+        caracteristica_especifico:
+          type: string
+          maxLength: 250
+          description:  información detallada sobre el producto, como dimensiones, capacidad, potencia, material, entre otros.
+          example: 'color negro'
+        tipo_iva:
+          type: number
+          format: float
+          description: Valor de la iva.
+          example: '10.0'
+        precio_inicial:
+          type: number
+          format: float
+          description: Precio inicial del producto sin incluir el impuesto al valor agregado.
+          example: '8.0'
+        precio_licitado:
+          type: number
+          format: float
+          description: Precio calculado para la licitación del producto sin incluir el impuesto al valor agregado.
+          example: '15.0'
+        precio_adjudicado:
+          type: number
+          format: float
+          description: Precio final adjudicado para el producto sin incluir el impuesto al valor agregado.
+          example: '18.0'
+        estado:
+          type: string
+          maxLength: 50
+          description: estado de la solicitud.
+          example: ' solicitado | validado | borrador | completa '
+    #
+    solicitudes:
+      description: Modelo de recurso Solicitud
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+          example: 1
+        uuid:
+          type: integer
+          format: uuid
+          description: UUID único del solicitud.      
+          example: 'd2387b5d-ab2f-4d33-924e-c6772a1e74af'
+        tipo_solicitud:
+          type: string
+          maxLength: 50
+          description: Nombre del tipo de solicitud        
+          example: ' Plan anual de Equipamiento | Productos de Urgencia | Productos Extra '
+        fecha_creacion:
+          type: string
+          format: date
+          description: Fecha de creacion. Fecha ISO 8061 en formato yyyy-MM-dd
+          example: "2024-04-17"
+        usuario:
+          type: string
+          maxLength: 50
+          description: Usuario que realizo la solicitud.
+          example: 'Por definir'
+        estado:
+          type: string
+          maxLength: 50
+          description: estado de la solicitud.
+          example: ' pendiente | completa '
+      #  producto:
+      #    type: object
+      #    description: Objeto con el listado de Productos.
+      #    properties:
+      #      uuidProducto:
+      #        type: integer
+      #        format: uuid
+      #        description: identificador del producto
+      #        example: "d2387b5d-ab2f-4d33-924e-c6772a1e74af"
+      #      nombre:
+      #        type: string
+      #        maxLength: 100
+      #        description: nombre del product.
+      #        example: 'Smart TV 30'
+      #      cantidad:
+      #        type: integer
+      #        format: int32
+      #        description: cantidad de productos a seleccionar
+      #        example: 2
+    #
+  requestBodies:
+    #
+    ######################################################################
+    #               --- Cuerpos de petición estándar ---                 #
+    ######################################################################
+    #
+    # IMPORTANTE: Eliminar si no se usa por no implementarse la operación.
+    standard_filter_body_param:
+      description: |
+        Parámetro de consulta de filtrado complejo a través de cuerpo de petición.
+        Se debe utilizar mediante una petición de caso especial POST como GET.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties: 
+              $filter:
+                $ref: '#/components/schemas/standard_filter_object'
+          examples: 
+            Ejemplo 1:
+              value:
+                "$filter": {
+                  "operation": "EQ",
+                  "values": [
+                    {
+                      "property": "property_1",
+                      "prop_type": "INTEGER",
+                      "prop_value": "7"
+                    }
+                  ]
+                }
+      required: false
+    #
+    # IMPORTANTE: Eliminar si no se usa por no implementarse la operación.
+    standard_delete_multiple_body_param:
+      description: |
+        Ejemplo de cuerpo de petición que contiene un listado de los identificadores 
+        de recursos a eliminar en una operación de borrado múltiple.
+        Se debe usar en los endpoints de borrado masivo.
+        Su definición es un ejemplo, dado que los identificadores pueden ser de distinto tipo. 
+        La definición de este cuerpo dependerá del recurso.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties: 
+              data:
+                type: array
+                items: 
+                  type: object
+                  properties:
+                    uuid:
+                      type: integer
+                      format: uuid
+                      description: UUID del recurso
+                      example: '2bd80c5a-fc3f-49a7-b79a-0c174e19aef6'
+                    id:
+                      type: integer
+                      format: int32
+                      description: Identificador del recurso
+                      example: '2bd80c5a-fc3f-49a7-b79a-0c174e19aef6'
+                description: Array con los identificadores o UUIDs de los recursos a eliminar.
+          examples:
+            Ejemplo 1:
+              value:
+                - uuid: '2bd80c5a-fc3f-49a7-b79a-0c174e19aef6'
+                - uuid: '497faaf6-5aab-425b-bb6d-a8e374c6ec98'
+      required: true
+    #
+    ######################################################################
+    #           --- Cuerpos de petición propios de la API ---            #
+    ######################################################################
+    #                                                                    #
+    #                             IMPORTANTE                             #
+    #    De acuerdo a la normativa, la nomenclatura de los cuerpos de    #
+    #    petición debe ser <método http><nombre recurso>_body_param      #
+    #    Ej: post_cliente_body_param                                     #
+    #                                                                    #
+    #    Borrar ejemplos una vez se hayan definido los cuerpos propios.  #
+    #                                                                    #
+    ######################################################################
+    #
+    # IMPORTANTE: Eliminar este ejemplo. Si se va a utilizar este mismo caso, cambiar el nombre
+    #             por uno descriptivo, y modificar la descripción y aquello que aplique.
+    post_solicitud_body_param:
+      description: |
+        Propiedades necesarias para crear una solicitud (no incluye variables derivadas).
+        Se usa en POST /solicitudes.
+        Se especificará al menos una propiedad obligatoria para no permitir la creación de recursos vacíos.
+      content:
+        application/json:
+          schema:
+            properties:       
+              tipo_solicitud:
+                type: string
+                maxLength: 50
+                description: Nombre del tipo de solicitud        
+                example: 'Productos Extra'
+              usuario:
+                type: string
+                maxLength: 50
+                description: nombre del usuario para la solicitud.
+                example: "Juan"
+              producto:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    denominacion:
+                      type: string
+                      maxLength: 250
+                      description: nombre del producto
+                      example: "TV Smart 32"
+                    codigo_tipo_product:
+                      type: string
+                      maxLength: 250
+                      description: identifica el tipo al que pertenece el producto.
+                      example: 'Smart Tv'
+                    caracteristica_especifico:
+                      type: string
+                      maxLength: 250
+                      description:  información detallada sobre el producto, como dimensiones, capacidad, potencia, material, entre otros.
+                      example: 'color negro'
+                    tipo_iva:
+                      type: number
+                      format: float
+                      description: Valor de la iva.
+                      example: '10.0'
+                    precio_inicial:
+                      type: number
+                      format: float
+                      description: Precio inicial del producto sin incluir el impuesto al valor agregado.
+                      example: '8.0'
+                    precio_licitado:
+                      type: number
+                      format: float
+                      description: Precio calculado para la licitación del producto sin incluir el impuesto al valor agregado.
+                      example: '15.0'
+                    precio_adjudicado:
+                      type: number
+                      format: float
+                      description: Precio final adjudicado para el producto sin incluir el impuesto al valor agregado.
+                      example: '18.0'
+                    estado:
+                      type: string
+                      maxLength: 50
+                      description: estado de la solicitud.
+                      example: ' solicitado | validado | borrador | completa '
+            required:
+              - tipo_solicitud
+              - usuario
+              - producto
+          examples:
+            Ejemplo 1:
+              value:
+                usuario: 'Antonio'
+                tipo_solicitud: "Productos Extra"
+                producto:
+                  - denominacion: "TV Smart 32"
+                    codigo_tipo_producto: Smart
+                    caracteristica_especifico: color negro'
+                    tipo_iva: '10.0'
+                    precio_inicial: '15.0'
+                    precio_licitado: '18.0'
+                    precio_adjudicado: '20.0'
+                    estado: 'Solicitado'
+      required: true
+    #
+    put_solicitud_body_param:
+      description: |
+        Propiedades a modificar de una solicitud (no incluye variables derivadas)
+        En los cuerpos de peticiones con verbo PUT ninguna property debe ser obligatoria.
+        Se usa en PUT /solicitudes/{id}.
+        La recepción de un cuerpo vacío debe dar como respuesta un código http 400, pero 
+        no se pueden especificar propiedades obligatorias dado que no es posible saber a priori
+        cuáles de ellas se enviarán para su modificación.
+      content:
+        application/json:  
+          schema:
+            properties:
+              id:
+                type: integer
+                format: int32
+                example: 1
+              uuid:
+                type: integer
+                format: uuid
+                description: UUID único del solicitud.      
+                example: 'd2387b5d-ab2f-4d33-924e-c6772a1e74af'
+              tipo_solicitud:
+                type: string
+                maxLength: 50
+                description: Nombre del tipo de solicitud        
+                example: 'Productos Extra'
+              usuario:
+                type: string
+                maxLength: 50
+                description: nombre del usuario para la solicitud.
+                example: "Juan"
+              producto:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      format: int32
+                      example: 1
+                    uuid_producto:
+                      type: integer
+                      format: uuid
+                      description: UUID único del solicitud.      
+                      example: 'd2387b5d-ab2f-4d33-924e-c6772a1e74af'
+                    denominacion:
+                      type: string
+                      maxLength: 250
+                      description: nombre del producto
+                      example: "TV Smart 32"
+                    codigo_tipo_product:
+                      type: string
+                      maxLength: 250
+                      description: identifica el tipo al que pertenece el producto.
+                      example: 'Smart Tv'
+                    caracteristica_especifico:
+                      type: string
+                      maxLength: 250
+                      description:  información detallada sobre el producto, como dimensiones, capacidad, potencia, material, entre otros.
+                      example: 'color negro'
+                    tipo_iva:
+                      type: number
+                      format: float
+                      description: Valor de la iva.
+                      example: '10.0'
+                    precio_inicial:
+                      type: number
+                      format: float
+                      description: Precio inicial del producto sin incluir el impuesto al valor agregado.
+                      example: '8.0'
+                    precio_licitado:
+                      type: number
+                      format: float
+                      description: Precio calculado para la licitación del producto sin incluir el impuesto al valor agregado.
+                      example: '15.0'
+                    precio_adjudicado:
+                      type: number
+                      format: float
+                      description: Precio final adjudicado para el producto sin incluir el impuesto al valor agregado.
+                      example: '18.0'
+                    estado:
+                      type: string
+                      maxLength: 50
+                      description: estado de la solicitud.
+                      example: ' solicitado | validado | borrador | completa '
+            required:
+              - tipo_solicitud
+              - usuario
+              - producto
+          examples:
+            Ejemplo 1:
+              value:
+                id: 1
+                uuid: 'd2387b5d-ab2f-4d33-924e-c6772a1e74af'
+                usuario: 'Antonio'
+                tipo_solicitud: "Productos Extra"
+                producto:
+                  - id: 1
+                    uuid_producto: 'd2387b5d-ab2f-4d33-924e-c6772a1e74af'
+                    id_solicitud: 1
+                    denominacion: "TV Smart 32"
+                    codigo_tipo_producto: Smart
+                    caracteristica_especifico: color negro'
+                    tipo_iva: '10.0'
+                    precio_inicial: '15.0'
+                    precio_licitado: '18.0'
+                    precio_adjudicado: '20.0'
+                    estado: 'Solicitado'  
+      required: true
+    #
+    post_producto_body_param:
+      description: |
+        Propiedades necesarias para crear un Producto (no incluye variables derivadas).
+        Se usa en POST /solicitudes/productos.
+        Se especificará al menos una propiedad obligatoria para no permitir la creación de recursos vacíos.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              productos:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id_solicitud:
+                      type: integer
+                      format: int32
+                      description: id de la solicitud
+                      example: 1
+                    denominacion:
+                      type: string
+                      maxLength: 250
+                      description: nombre del Product.
+                      example: 'Smart Tv 32'
+                    codigo_tipo_product:
+                      type: string
+                      maxLength: 250
+                      description: identifica el tipo al que pertenece el producto.
+                      example: 'Smart Tv'
+                    caracteristica_especifico:
+                      type: string
+                      maxLength: 250
+                      description:  información detallada sobre el producto, como dimensiones, capacidad, potencia, material, entre otros.
+                      example: 'color negro'
+                    tipo_iva:
+                      type: number
+                      format: float
+                      description: Valor de la iva.
+                      example: '10.0'
+                    precio_inicial:
+                      type: number
+                      format: float
+                      description: Precio inicial del producto sin incluir el impuesto al valor agregado.
+                      example: '8.0'
+                    precio_licitado:
+                      type: number
+                      format: float
+                      description: Precio calculado para la licitación del producto sin incluir el impuesto al valor agregado.
+                      example: '15.0'
+                    precio_adjudicado:
+                      type: number
+                      format: float
+                      description: Precio final adjudicado para el producto sin incluir el impuesto al valor agregado.
+                      example: '18.0'
+                    estado:
+                      type: string
+                      maxLength: 50
+                      description: estado de la solicitud.
+                      example: ' solicitado | validado | borrador | completa '  
+                  required:
+                    - id_solicitud
+                    - denominacion
+                    - codigo_tipo_producto
+                    - tipo_iva
+                    - precio_inicial
+      required: true
+    #
+    put_producto_body_param:
+      description: |
+        Propiedades a modificar de un producto (no incluye variables derivadas)
+        En los cuerpos de peticiones con verbo PUT ninguna property debe ser obligatoria.
+        Se usa en PUT /solicitudes/productos/{uuid}.
+        La recepción de un cuerpo vacío debe dar como respuesta un código http 400, pero 
+        no se pueden especificar propiedades obligatorias dado que no es posible saber a priori
+        cuáles de ellas se enviarán para su modificación.
+      content:
+        application/json:  
+          schema:
+            properties:
+              id:
+                type: integer
+                format: int32
+                example: 1
+              uuid:
+                type: integer
+                format: uuid
+                description: UUID único del producto.      
+                example: 'd2387b5d-ab2f-4d33-924e-c6772a1e74af'   
+              id_solicitud:
+                type: integer
+                format: int32
+                example: 1
+              denominacion:
+                type: string
+                maxLength: 250
+                description: nombre del Product.
+                example: 'Smart Tv 32'
+              codigo_tipo_product:
+                type: string
+                maxLength: 250
+                description: identifica el tipo al que pertenece el producto.
+                example: 'Smart Tv'
+              caracteristica_especifico:
+                type: string
+                maxLength: 250
+                description:  información detallada sobre el producto, como dimensiones, capacidad, potencia, material, entre otros.
+                example: 'color negro'
+              tipo_iva:
+                type: number
+                format: float
+                description: Valor de la iva.
+                example: '10.0'
+              precio_inicial:
+                type: number
+                format: float
+                description: Precio inicial del producto sin incluir el impuesto al valor agregado.
+                example: '8.0'
+              precio_licitado:
+                type: number
+                format: float
+                description: Precio calculado para la licitación del producto sin incluir el impuesto al valor agregado.
+                example: '15.0'
+              precio_adjudicado:
+                type: number
+                format: float
+                description: Precio final adjudicado para el producto sin incluir el impuesto al valor agregado.
+                example: '18.0'
+              estado:
+                type: string
+                maxLength: 50
+                description: estado de la solicitud.
+                example: ' solicitado | validado | borrador | completa '
+            required:
+              - id_solicitud
+              - denominacion
+              - caracteristica_especifico
+              - tipo_iva
+              - precio_inicial
+              - estado
+          examples:
+            Ejemplo 1:
+              value:
+                id: 1
+                uuid: "d2387b5d-ab2f-4d33-924e-c6772a1e74af"
+                id_solicitud: 1
+                denominacion: "Smart Tv 32"
+                codigo_tipo_producto: "smart"
+                caracteristica_especifico: "color negro"
+                tipo_iva: 10
+                precio_inicial: 15
+                precio_licitado: 18
+                precio_adjudicado: 20
+                estado: "Solicitado"
+      required: true
+    #
+    #################### Ejemplo eliminar una vez se termine ###################
+    body_param:
+      description: |
+        Ejemplo de parámetro sensible pasado en el body de la petición.
+        Esto es un ejemplo de paso de parámetros en el cuerpo de la petición.
+        Se usará cuando se deban pasar gran cantidad de parámetros o estos sean de naturaleza sensible,
+        mediante una petición de caso especial POST como GET.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              nif:
+                type: string
+                maxLength: 9
+                description: Documento de identidad
+          examples:
+            Ejemplo 1:
+              value:
+                nif: '00000000A'
+      required: false
+    #
+  responses:
+    #
+    ######################################################################
+    #                                                                    #
+    #      ----------------------    NOTA:   ----------------------      #
+    #                                                                    #
+    #   Todas las respuestas deben incluir el apartado 'headers', en el  #
+    #   que se indican las cabeceras a esperar. Esto permite establecer  #
+    #   con precisión toda la información que se va a recibir y así      #
+    #   facilitar el tratamiento adecuado de la misma.                   #
+    #                                                                    #
+    ######################################################################
+    #
+    #
+    ######################################################################
+    #     ----- Respuestas estándar (NO ELIMINAR NI MODIFICAR) -----     #
+    ######################################################################
+    #
+    # Respuesta para cualquier endpoint de eliminación de recurso individual
+    standard_delete_response:
+      description: Recurso eliminado correctamente
+      headers:
+        x-trace-id:
+          schema:
+            $ref: '#/components/schemas/uuid'
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/standard_response'
+              - properties:
+                  data:
+                    type: object
+                    properties:
+                      uuid:
+                        type: integer
+                        format: uuid
+                        description: UUID del recurso eliminado
+                        example: '497faaf6-5aab-425b-bb6d-a8e374c6ec98'
+                      id:
+                        type: integer
+                        format: int32
+                        description: Identificador del recurso eliminado
+                        example: 23
+          examples:
+            Ejemplo 1:
+              $ref: '#/components/examples/standard_delete_response_example'
+    #
+    # Respuesta para endpoints de eliminación masiva de recursos
+    standard_multi_delete_response:
+      description: Recursos borrados correctamente
+      headers:
+        x-trace-id:
+          schema:
+            $ref: '#/components/schemas/uuid'
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/standard_response'
+            properties:
+              data:
+                type: object
+                properties:
+                  deleted_elements:
+                    type: array
+                    items:
+                      type: string
+                    description: Array de identificadores de recursos eliminados
+                    example: 
+                    - '497faaf6-5aab-425b-bb6d-a8e374c6ec98'
+                    - '5e1dd3b1-e524-43f4-beef-46b0795ebb4f'
+          examples:
+            Ejemplo 1:
+              $ref: '#/components/examples/standard_multi_delete_response_example'
+    #
+    # Respuesta para peticiones incorrectas por parte del cliente (parámetros ausentes, erróneos, etc.)
+    standard_bad_request_response:
+      description: Petición incorrecta
+      headers:
+        x-trace-id:
+          schema:
+            $ref: '#/components/schemas/uuid'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/standard_response'
+          example:
+            result:
+              status: false
+              http_code: 400
+              info: 'Parámetros incorrectos'
+              trace_id: 123456abcde
+              errors:
+              - code: 1000
+                message: El atributo '%s' no puede contener un valor nulo
+              - code: 1005
+                message: El contenido del atributo '%s' ha de seguir el formato ISO 8601 para fechas sin hora
+    #
+    # Respuesta para peticiones en las que el backend autentica al cliente y este no tiene acceso al mismo.
+    standard_unauthorized_response:
+      description: No autorizado
+      headers:
+        x-trace-id:
+          schema:
+            $ref: '#/components/schemas/uuid'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/standard_response'
+          example:
+            result:
+              status: false
+              http_code: 401
+              info: 'No autorizado'
+              trace_id: 123456abcde
+    #
+    # Respuesta para peticiones en las que el backend autentica al cliente, 
+    # y este tiene acceso a la API pero no al recurso invocado.
+    standard_forbidden_response:
+      description: Recurso prohibido
+      headers:
+        x-trace-id:
+          schema:
+            $ref: '#/components/schemas/uuid'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/standard_response'
+          example:
+            result:
+              status: false
+              http_code: 403
+              info: 'Recurso prohibido'
+              trace_id: 123456abcde
+    #
+    # Respuesta para peticiones en las que no se ha encontrado el recurso solicitado.
+    standard_not_found_response:
+      description: No encontrado
+      headers:
+        x-trace-id:
+          schema:
+            $ref: '#/components/schemas/uuid'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/standard_response'
+          example:
+            result:
+              status: false
+              http_code: 404
+              info: 'Recurso no encontrado'
+              trace_id: 123456abcde
+              errors:
+              - code: 1104
+                message: 'No se ha encontrado ningún elemento con el identificador proporcionado. Por favor, revise: %s'
+    #
+    # Respuesta a devolver en caso de que el backend controle la cuota máxima de peticiones y esta se haya rebasado. 
+    # Por norma general será el API manager el que lo gestione y esta respuesta no será necesaria.
+    standard_too_many_requests_response:
+      description: Demasiadas peticiones
+      headers:
+        x-trace-id:
+          schema:
+            $ref: '#/components/schemas/uuid'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/standard_response'
+          example:
+            result:
+              status: false
+              http_code: 429
+              info: 'Cuota de peticiones excedida'
+              trace_id: 123456abcde
+    #
+    # Respuesta a devolver cuando se produzcan errores no controlados.
+    standard_server_error_response:
+      description: Error desconocido
+      headers:
+        x-trace-id:
+          schema:
+            $ref: '#/components/schemas/uuid'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/standard_response'
+          example:
+            result:
+              status: false
+              http_code: 500
+              info: 'Error desconocido'
+              trace_id: 123456abcde
+              errors:
+              - code: 2000
+                message: Mensaje de error
+    #
+    # Respuesta estándar para el endpoint /status
+    # OBLIGATORIA en todas las APIs definidas bajo el estándar de MD.
+    standard_status_endpoint_response:
+      description: Status
+      headers:
+        x-trace-id:
+          schema:
+            $ref: '#/components/schemas/uuid'
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/standard_response'
+            properties:
+              data:
+                type: object
+                description: Comprobaciones realizadas cuando se recibe la llamada al endpoint de status
+                properties:
+                  systems:
+                    type: array
+                    description: Array de sistemas comprobados y resultados.
+                    items:
+                      $ref: '#/components/schemas/standard_status_endpoint_system_object'
+                  requests:
+                    type: array
+                    description: Array de enpoints llamados y resultados.
+                    items:
+                      $ref: '#/components/schemas/standard_status_endpoint_request_object'
+          examples:
+            Ejemplo 1:
+              $ref: '#/components/examples/standard_status_endpoint_response_example'
+    #
+    ######################################################################
+    #              ----- Respuestas propias de la API -----              #
+    ######################################################################
+    #                                                                    #
+    #    Si hay respuestas que no devuelven el recurso completo sino     #
+    #    parte, se creará un definición específica para esa respuesta    #
+    #    con la nomemclatura: <método http><nombre recurso>_response     #
+    #    Ej: post_cliente_response                                       #
+    #                                                                    #
+    #    Si se diera el caso de que la respuesta se usara para varios    #
+    #    verbos, por ejemplo POST y PUT, se incluirán ambos en el        #
+    #    nombre de la misma.                                             #
+    #    Ej: post_put_cliente_response                                   #
+    #                                                                    #
+    ######################################################################
+    #
+    # Respuesta de obtención de un cliente.
+    # Se usa en todas las respuestas que devuelvan un cliente concreto
+    #
+    solicitud_response:
+      description: Solicitud obtenido correctamente
+      headers:
+        x-trace-id:
+          schema:
+            $ref: '#/components/schemas/uuid'
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/standard_response'
+              - properties:
+                  data:
+                    $ref: '#/components/schemas/solicitudes'
+          examples:
+            Ejemplo 1:
+              $ref: '#/components/examples/solicitud_response_example'
+    #
+    solicitudes_response:
+      description: Solicitud obtenido correctamente
+      headers:
+        x-trace-id:
+          schema:
+            $ref: '#/components/schemas/uuid'
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/standard_response'
+              - properties:
+                  data:
+                    $ref: '#/components/schemas/solicitudes'
+          examples:
+            Ejemplo 1:
+              $ref: '#/components/examples/solicitudes_response_example'
+    #
+    post_solicitud_response:
+      description: Solicitud creado correctamente
+      headers:
+        x-trace-id:
+          schema:
+            $ref: '#/components/schemas/uuid'
+        Location:
+          description: Ubicación del recurso
+          schema:
+            $ref: '#/components/schemas/location_header'
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/standard_response'
+            properties:
+              data:
+                type: object
+                properties: 
+                  uuid:
+                    type: integer
+                    format: uuid
+                    description: UUID único de la Solicitud       
+                    example: 5e1dd3b1-e524-43f4-beef-46b0795ebb4f
+                  typo_solicitud:
+                    type: string
+                    maxLength: 50
+                    description: typo de la solicitud      
+                    example: 'Producto Extra'
+    #
+    producto_response:
+      description: Solicitud obtenido correctamente
+      headers:
+        x-trace-id:
+          schema:
+            $ref: '#/components/schemas/uuid'
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/standard_response'
+              - properties:
+                  data:
+                    $ref: '#/components/schemas/productos'
+          examples:
+            Ejemplo 1:
+              $ref: '#/components/examples/produto_response_example'
+    #
+    productos_response:
+      description: Solicitud obtenido correctamente
+      headers:
+        x-trace-id:
+          schema:
+            $ref: '#/components/schemas/uuid'
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/standard_response'
+              - properties:
+                  data:
+                    $ref: '#/components/schemas/productos'
+          examples:
+            Ejemplo 1:
+              $ref: '#/components/examples/produtos_response_example'
+    #
+  examples:
+    #
+    ####################################################################
+    #                   --- Ejemplos de la API ---                     #
+    ####################################################################
+    #                                                                  #
+    #    En esta sección se declaran los ejemplos propios de la API,   #
+    #    especialmente los de las respuestas, para referenciarlos.     #
+    #                                                                  #
+    #    Es un paso importante, ya que los ejemplos declarados aquí    #
+    #    servirán tanto para los desarrolladores como para la          #
+    #    generación correcta de los mock server.                       #
+    #                                                                  #
+    ####################################################################
+    #
+    solicitud_response_example:
+      value:
+        result:
+          status: true
+          http_code: 200
+          trace_id: 12345abcde
+        solicitudes:
+          id: 1
+          uuid: '59909623-0b85-46e2-a5f4-ca81e81e3464'
+          tipo_solicitud: Productos Extra
+          fecha_creacion: '18-04-2024'
+          usuario: usuario1
+          estado: Solicitado
+          producto:
+            - id: 1
+              uuid_producto: '59909623-0b85-46e2-a5f4-ca81e81e3464'
+              id_solicitud: 1
+              denominacion: TV Smart 32
+              codigo_tipo_producto: Smart
+              caracteristica_especifico: color negro'
+              tipo_iva: '10.0'
+              precio_inicial: '15.0'
+              precio_licitado: '18.0'
+              precio_adjudicado: '20.0'
+              estado: 'Solicitado'
+    #
+    solicitudes_response_example:
+      value:
+        result:
+          status: true
+          http_code: 206
+          trace_id: 12345abcde
+        metadata:
+          paging:
+            init: 15
+            limit: 5
+            num_page: 3
+            total: 35
+            total_pages: 7
+            links:
+              self:
+                href: '/clientes?$init=15&amp;$limit=5'
+              previous:
+                href: '/clientes?$init=10&amp;$limit=5'
+              next:
+                href: '/clientes?$init=20&amp;$limit=5'
+              first:
+                href: '/clientes?$init=0&amp;$limit=5'
+              last:
+                href: '/clientes?$init=30&amp;$limit=5'
+        solicitudes:
+          - id: 1
+            uuid: '59909623-0b85-46e2-a5f4-ca81e81e3464'
+            tipo_solicitud: Productos Extra
+            fecha_creacion: '18-04-2024'
+            usuario: usuario1
+            estado: Solicitado
+            producto:
+              - id: 1
+                uuid_producto: '59909623-0b85-46e2-a5f4-ca81e81e3464'
+                id_solicitud: 1
+                denominacion: TV Smart 32
+                codigo_tipo_producto: Smart
+                caracteristica_especifico: color negro'
+                tipo_iva: '10.0'
+                precio_inicial: '15.0'
+                precio_licitado: '18.0'
+                precio_adjudicado: '20.0'
+                estado: 'Solicitado'
+    #
+    produto_response_example:
+      value:
+        result:
+          status: true
+          http_code: 200
+          trace_id: 12345abcde
+        productos:
+          id: 1
+          uuid_producto: '59909623-0b85-46e2-a5f4-ca81e81e3464'
+          id_solicitud: 1
+          denominacion: TV Smart 32
+          codigo_tipo_producto: Smart
+          caracteristica_especifico: color negro'
+          tipo_iva: '10.0'
+          precio_inicial: '15.0'
+          precio_licitado: '18.0'
+          precio_adjudicado: '20.0'
+          estado: 'Solicitado'  
+    #
+    produtos_response_example:
+      value:
+        result:
+          status: true
+          http_code: 200
+          trace_id: 12345abcde
+        productos:
+          - id: 1
+            uuid_roducto: '59909623-0b85-46e2-a5f4-ca81e81e3464'
+            id_solicitud: 1
+            denominacion: TV Smart 32
+            codigo_tipo_producto: Smart
+            caracteristica_especifico: color negro'
+            tipo_iva: '10.0'
+            precio_inicial: '15.0'
+            precio_licitado: '18.0'
+            precio_adjudicado: '20.0'
+            estado: 'Solicitado'  
+    #
+    standard_delete_response_example:
+      value:
+        result:
+          status: true
+          http_code: 200
+          info: 'Solicitud realizada con éxito'
+          trace_id: 123456abcde
+        data:
+          uuid: '5e1dd3b1-e524-43f4-beef-46b0795ebb4f'
+    #
+    standard_multi_delete_response_example:
+      value:
+        result:
+          status: true
+          http_code: 200
+          info: 'Solicitud realizada con éxito'
+          trace_id: 123456abcde
+        data:
+          deleted_elements: ['5e1dd3b1-e524-43f4-beef-46b0795ebb4f', '4e35b5ab-7d96-4aa8-88cf-1c6e77059766', '59909623-0b85-46e2-a5f4-ca81e81e3464']
+    #
+    standard_status_endpoint_response_example:
+      value:
+        result:
+          status: true
+          http_code: 200
+          info: Solicitud realizada con éxito
+          trace_id: 12345abcde
+        data:
+          systems:
+            - system: Database
+              status: true
+          requests:
+            - request: '/usuarios'
+              response: 200
+    #
+    cliente_response_example:
+      value:
+        result:
+          status: true
+          http_code: 200
+          trace_id: 12345abcde
+        data:
+          uuid: '59909623-0b85-46e2-a5f4-ca81e81e3464'
+          nombre: 'Juan'
+          edad: 40
+          fecha_nacimiento: '1980-05-20'
+          fecha_hora_alta: '2020-03-15T23:55:33+01:00'
+          tipo_cliente: 'N'
+          baja: false
+    #
+    clientes_response_example:
+      value:
+        result:
+          status: true
+          http_code: 206
+          trace_id: 12345abcde
+        metadata:
+          paging:
+            init: 15
+            limit: 5
+            num_page: 3
+            total: 35
+            total_pages: 7
+            links:
+              self:
+                href: '/clientes?$init=15&amp;$limit=5'
+              previous:
+                href: '/clientes?$init=10&amp;$limit=5'
+              next:
+                href: '/clientes?$init=20&amp;$limit=5'
+              first:
+                href: '/clientes?$init=0&amp;$limit=5'
+              last:
+                href: '/clientes?$init=30&amp;$limit=5'
+        data:
+          clientes:
+            - uuid: '59909623-0b85-46e2-a5f4-ca81e81e3464'
+              nombre: 'Juan'
+              edad: 40
+              fecha_nacimiento: '1980-05-20'
+              fecha_hora_alta: '2020-03-15T23:55:33+01:00'
+              tipo_cliente: 'N'
+              baja: false
+            - uuid: 'ba3192f5-7ddf-4fdd-ac4e-97c206a13018'
+              nombre: 'Pepe'
+              edad: 35
+              fecha_nacimiento: '1985-05-20'
+              fecha_hora_alta: '2020-04-16T23:55:33+01:00'
+              tipo_cliente: 'A'                    
+              baja: false
+    #
+    post_cliente_response_example:
+      value:
+        result:
+          status: true
+          http_code: 201
+          trace_id: 12345abcde
+        data:
+          uuid: 'ba3192f5-7ddf-4fdd-ac4e-97c206a13018'
+          nombre: 'Juan'
+    #
+    post_fichero_expediente_response_example:
+      value:
+        result:
+          status: true
+          http_code: 200
+          trace_id: 12345abcde
+        data:
+          uuid: 'b87a432c-7459-49e8-b9d5-b5dcb31c0cbb'
+          titulo: 'Expediente 1'
+          num_paginas: '10'
+          fecha_creacion: '1990-07-04'
+          ultima_revision: '2021-03-21'
+    #
+    expedientes_response_example:
+      value:
+        result:
+          status: true
+          http_code: 206
+          trace_id: 12345abcde
+        metadata:
+          paging:
+            init: 15
+            limit: 5
+            num_page: 3
+            total: 35
+            total_pages: 7
+            links:
+              self:
+                href: '/expedientes?$init=15&amp;$limit=5'
+              previous:
+                href: '/expedientes?$init=10&amp;$limit=5'
+              next:
+                href: '/expedientes?$init=20&amp;$limit=5'
+              first:
+                href: '/expedientes?$init=0&amp;$limit=5'
+              last:
+                href: '/expedientes?$init=30&amp;$limit=5'
+        data:
+          expedientes:
+            - uuid: 'b87a432c-7459-49e8-b9d5-b5dcb31c0cbb'
+              titulo: 'Expediente 1'
+              num_paginas: '10'
+              fecha_creacion: '1990-07-04'
+              ultima_revision: '2021-03-21'
+            - uuid: 'd2387b5d-ab2f-4d33-924e-c6772a1e74af'
+              titulo: 'Expediente 2'
+              num_paginas: '20'
+              fecha_creacion: '1999-12-24'
+              ultima_revision: '2021-01-03'

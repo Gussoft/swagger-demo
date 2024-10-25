@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: swagger-demo
+  webflux:
+    base-path: /
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    url: /swagger.yml

@@ -1,0 +1,178 @@
+openapi: 3.0.3
+info:
+  version: 1.0.0
+  title: Simple Pet Store
+  termsOfService: https://swagger.io/
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  contact:
+    name: Store Development Team
+    email: STORE-TEAM@example.com
+servers:
+  - url: http://localhost
+    description: local
+  - url: https://dev.store.com
+    description: development
+  - url: https://stage.store.com
+    description: stage
+
+paths:
+  /pet:
+    get:
+      tags:
+        - "Pet APIs"
+      summary: "Retrieve all Pets"
+      description: "Returns a collection of Pet"
+      operationId: "getPets"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'
+        "400":
+          description: Bad Request
+    post:
+      tags:
+        - "Pet APIs"
+      summary: "Add a Pet"
+      description: "Add a single Pet"
+      operationId: "addPet"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pet'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+  /pet/{id}:
+    get:
+      tags:
+        - "Pet APIs"
+      summary: Find pet by ID
+      description: Returns a single pet
+      operationId: getPetById
+      parameters:
+        - name: petId
+          in: path
+          description: ID of pet to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Pet not found
+    put:
+      tags:
+        - "Pet APIs"
+      summary: "Update a Pet"
+      description: "update a single Pet"
+      operationId: "updatePet"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pet'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+    delete:
+      tags:
+        - "Pet APIs"
+      summary: "delete a Pet"
+      description: "delete a single Pet"
+      operationId: "deletePet"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pet'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+  /pet/search:
+    get:
+      tags:
+        - "Pet APIs"
+      summary: Search pets by name
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'
+        "404":
+          description: Not Found
+  /pet/{petId}/:
+    patch:
+      tags:
+        - "Pet APIs"
+      summary: "Update pet status by ID"
+      description: "update only status by id"
+      operationId: "updatePetByStatus"
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: status
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+components:
+  schemas:
+    Pet:
+      type: object
+      required:
+        - petId
+      properties:
+        petId:
+          type: integer
+        name:
+          type: string
+        color:
+          type: string
+        birthDate:
+          type: string
+          format: date-time
+        status:
+          type: boolean
